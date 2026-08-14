@@ -2,6 +2,8 @@
 
 [English](README.en.md) | 中文
 
+![预览](docs/screenshot-composer.png)
+
 语音输入 + 提示词优化插件 for DeepSeek Harness 的 Web GUI（`dsh web`）。
 
 输入框工具行右侧（发送按钮左边）有两个按钮：

@@ -2,6 +2,8 @@
 
 English | [中文](README.md)
 
+![Preview](docs/screenshot-composer.png)
+
 Voice input + prompt optimization plugin for the DeepSeek Harness Web GUI (`dsh web`).
 
 Two buttons appear on the right side of the composer tool row (left of the send button):
