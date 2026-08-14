@@ -30,39 +30,55 @@
   注册 `/dsh-voice-input/optimize` 精确路由：读请求体 → `ctx.llm.stream`
   （system 提示词限定"只返回优化后的提示词"，`reasoningEffort: "off"`，
   30s 超时，4096 token 上限）→ 返回 `{ text }`；所有错误路径返回 JSON 错误
-- 依赖：宿主端需要 `@deepseek-ai/dsh-llm`（已作为 profile 依赖安装）
+- 依赖：宿主端需要 `@deepseek-ai/dsh-llm`（npm 安装插件时会自动带上）
 
-## 安装到 web profile（已完成，仅供参考）
+## 安装到另一台电脑（从 GitHub）
+
+**前提**：该电脑已能运行 `dsh web`，浏览器为 Chrome / Edge。
 
 ```powershell
+# ① 下载插件源码（或 GitHub 页面 Code → Download ZIP）
+git clone https://github.com/zjzqs/dsh-client-ui-voice-input.git D:\dsh-voice-input
+
+# ② web profile 目录
 $profile = "$env:USERPROFILE\.dsh\profiles\web"
 
-# 1) 源码放入 profile 树内（同盘，保证 node 的 import 能解析到依赖）
-Copy-Item -Recurse -Force "<源码目录>" "$profile\voice-input-src"
+# ③ 源码放入 profile 树内（必须放 profile 目录下：宿主端 import 依赖时
+#    从自身真实路径向上找 node_modules，放 profile 树内才能解析到）
+Copy-Item -Recurse -Force "D:\dsh-voice-input" "$profile\voice-input-src"
 
-# 2) package.json 增加依赖（file: 相对路径，npm 会建 junction）
-#    "dsh-client-ui-voice-input": "file:./voice-input-src"
-#    "@deepseek-ai/dsh-llm": "^0.1.0-rc.6"
+# ④ 在 $profile\package.json 的 "dependencies" 里加一行：
+#      "dsh-client-ui-voice-input": "file:./voice-input-src"
+#    然后安装（npm 会自动装插件的依赖 @deepseek-ai/dsh-llm 并建好链接）：
 & npm.cmd install --no-audit --no-fund --prefix $profile
-
-# 3) cordis.patch.yml 启用（已启用）：
-#    - insert:
-#        - id: voice-input
-#          name: dsh-client-ui-voice-input
-
-# 4) 重启 dsh web（宿主端插件在启动时加载）
 ```
 
-注意：`dsh-client-ui-voice-input` 必须是 profile package.json 的依赖，
-否则 `npm install` 会把它当多余包裁掉。
+**⑤ 启用插件** —— 编辑 `$profile\cordis.patch.yml`：
 
-## 修改后重新部署
+```yaml
+# Voice input + prompt optimization (dsh-client-ui-voice-input).
+- insert:
+    - id: voice-input
+      name: dsh-client-ui-voice-input
+```
+
+**⑥ 重启 `dsh web`**，刷新页面后输入框右侧出现 🎤 和 ✨ 即可使用。
+
+注意：
+
+- `dsh-client-ui-voice-input` 必须是 profile package.json 的依赖，否则
+  `npm install` 会把它当多余包裁掉
+- 优化功能调用该电脑 dsh 自己配置的默认模型（`agentDefaultModel`），
+  配置好 DeepSeek API key 即可，插件不存任何凭据
+- 语音识别走浏览器 Web Speech 云端识别，需要联网
+
+## 修改后重新部署（本机开发时）
 
 编辑源码后同步到 profile 内的安装副本，然后重启 `dsh web`：
 
 ```powershell
-Copy-Item -Recurse -Force "D:\CODE\DEEPSEEK\voice-input\*" "$env:USERPROFILE\.dsh\profiles\web\voice-input-src\"
-# 重启 dsh web（或运行 D:\CODE\DEEPSEEK\restart-dsh-web.ps1）
+Copy-Item -Recurse -Force "本仓库目录\*" "$env:USERPROFILE\.dsh\profiles\web\voice-input-src\"
+# 重启 dsh web（杀进程 → 重新启动）
 ```
 
 浏览器端 bundle 由服务器按请求实时读取（`no-cache`），仅改 `lib/client.js`
